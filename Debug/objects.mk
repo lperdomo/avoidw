@@ -4,5 +4,5 @@
 
 USER_OBJS :=
 
-LIBS := -lAria -lpthread -ldl
+LIBS := -lAria -lArNetworking -lpthread -ldl -lrt
 

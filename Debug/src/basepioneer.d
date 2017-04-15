@@ -1,5 +1,5 @@
-src/basepioneer.o: ../src/basepioneer.cpp ../src/ClassRobo.h \
- /usr/local/Aria/include/Aria.h /usr/local/Aria/include/ariaOSDef.h \
+src/basepioneer.o: ../src/basepioneer.cpp /usr/local/Aria/include/Aria.h \
+ /usr/local/Aria/include/ariaOSDef.h \
  /usr/local/Aria/include/ariaTypedefs.h \
  /usr/local/Aria/include/ArSerialConnection.h \
  /usr/local/Aria/include/ArDeviceConnection.h \
@@ -136,8 +136,6 @@ src/basepioneer.o: ../src/basepioneer.cpp ../src/ClassRobo.h \
  /usr/local/Aria/include/ArZippable.h \
  /usr/local/Aria/include/ArS3Series.h \
  /usr/local/Aria/include/ArSZSeries.h
-
-../src/ClassRobo.h:
 
 /usr/local/Aria/include/Aria.h:
 

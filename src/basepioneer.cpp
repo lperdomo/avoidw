@@ -1,24 +1,52 @@
-//============================================================================
-// Name        : basepioneer.cpp
-// Author      : 
-// Version     :
-// Copyright   : Your copyright notice
-// Description : Hello World in C++, Ansi-style
-//============================================================================
-
 #include <iostream>
-#include <stdio.h>
-#include "ClassRobo.h"
+#include "Aria.h"
+
 using namespace std;
 
-int main()
+int main(int argc, char** argv)
 {
-	int sucesso;
-	PioneerRobot *robo;
-	PioneerRobot(ConexaoSimulacao,"",&sucesso);
-	//PioneerRobot(ConexaoRadio,"192.168.1.11",&sucesso);
-	robo->Move(50,50);
+	Aria::init();
+	ArArgumentParser parser(&argc, argv);
+	parser.loadDefaultArguments();
+	ArRobot robot;
+	ArAnalogGyro gyro(&robot);
+	ArSonarDevice sonar;
+	ArRobotConnector robotConnector(&parser, &robot);
+	ArLaserConnector laserConnector(&parser, &robot, &robotConnector);
 
-	cout << "!!!Hello World!!!" << endl; // prints !!!Hello World!!!
+	if(!robotConnector.connectRobot()) {
+		ArLog::log(ArLog::Terse, "Sem conexão com Pioneer");
+		if(parser.checkHelpAndWarnUnparsed()) {
+			Aria::logOptions();
+			Aria::exit(1);
+		}
+	}
+	ArLog::log(ArLog::Normal, "Conexão com Pioneer");
+	robot.addRangeDevice(&sonar);
+	robot.runAsync(true);
+
+	ArKeyHandler keyHandler;
+	Aria::setKeyHandler(&keyHandler);
+	robot.attachKeyHandler(&keyHandler);
+	cout << "ESC para sair" << endl;
+
+	int sensores[8];
+
+	robot.enableMotors();
+	while (Aria::getRunning()) {
+		robot.lock();
+
+		for (int i=0;i<8;i++) sensores[i]=(int)(robot.getSonarRange(i));
+
+		if (sensores[3] < 2500) {
+			robot.setVel2(500, 100);
+		} else {
+			robot.setVel2(500, 500);
+		}
+		robot.unlock();
+		ArUtil::sleep(100);
+	}
+
+	Aria::exit(0);
 	return 0;
 }
