@@ -38,8 +38,10 @@ int main(int argc, char** argv)
 
 		for (int i=0;i<8;i++) sensores[i]=(int)(robot.getSonarRange(i));
 
-		if (sensores[3] < 2500) {
+		if (sensores[3] < 2500 && sensores[5] > 2500) {
 			robot.setVel2(500, 100);
+		} else if (sensores[3] < 2500 && sensores[0] > 2500) {
+			robot.setVel2(100, 500);
 		} else {
 			robot.setVel2(500, 500);
 		}
