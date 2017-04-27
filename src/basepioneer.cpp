@@ -11,53 +11,79 @@ int main(int argc, char** argv)
 	ArRobot robot;
 	ArAnalogGyro gyro(&robot);
 	ArSonarDevice sonar;
+	ArSick sick;
 	ArRobotConnector robotConnector(&parser, &robot);
 	ArLaserConnector laserConnector(&parser, &robot, &robotConnector);
 
 	if(!robotConnector.connectRobot()) {
-		ArLog::log(ArLog::Terse, "Sem conexão com Pioneer");
+		ArLog::log(ArLog::Terse, "Failed to connect with Pioneer");
 		if(parser.checkHelpAndWarnUnparsed()) {
 			Aria::logOptions();
 			Aria::exit(1);
 		}
 	}
-	ArLog::log(ArLog::Normal, "Conexão com Pioneer");
+	ArLog::log(ArLog::Normal, "Connected with Pioneer");
 	robot.addRangeDevice(&sonar);
+	robot.addRangeDevice(&sick);
 	robot.runAsync(true);
 
-	ArKeyHandler keyHandler;
-	Aria::setKeyHandler(&keyHandler);
-	robot.attachKeyHandler(&keyHandler);
-	cout << "ESC para sair" << endl;
+	sick.runAsync();
+	laserConnector.setupLaser(&sick);
+	if(!laserConnector.connectLaser(&sick)) {
+		ArLog::log(ArLog::Terse, "Failed to connect with Sick");
+		if(parser.checkHelpAndWarnUnparsed()) {
+			Aria::logOptions();
+			Aria::exit(1);
+		}
+	}
 
-	int sensores[10];
-
-	//robot.setDeltaHeading(degrees);
-	robot.setRotVelMax(10);
+	int sonars[8];
+	vector<ArSensorReading>* sickReadings;
+	bool obstacleFront, obstacleLeft, obstacleRight
+	, obstacleLeftFront, obstacleRightFront, obstacleFrontLeft, obstacleFrontRight;
 	robot.enableMotors();
+	robot.setVel2(200, 200);
 	while (Aria::getRunning()) {
 		robot.lock();
 
-		for (int i=0;i<10;i++) sensores[i]=(int)(robot.getSonarRange(i));
-		cout << "1" << " " << sensores[0];
-		cout << " 2" << " " << sensores[1];
-		cout << " 3" << " " << sensores[2];
-		cout << " 4" << " " << sensores[3];
-		cout << " 5" << " " << sensores[4];
-		cout << " 6" << " " << sensores[5];
-		cout << " 7" << " " << sensores[6];
-		cout << " 8" << " " << sensores[7];
-		cout << " 9" << " " << sensores[8];
-		cout << " 10" << " " << sensores[9] << endl;
+		for (int i=0;i<8;i++) sonars[i] = robot.getSonarRange(i);
 
-		/*if (sensores[3] < 2500 && sensores[5] > 2500) {
-			robot.setVel2(500, 100);
-		} else if (sensores[3] < 2500 && sensores[0] > 2500) {
-			robot.setVel2(100, 500);
-		} else {
-			robot.setVel2(500, 500);
-		}*/
+		obstacleFront = (sonars[3] < 2000 || sonars[4] < 2000);
+		obstacleLeft = (sonars[0] < 2000);
+		obstacleRight = (sonars[7] < 2000);
+		obstacleLeftFront = (sonars[1] < 2000);
+		obstacleRightFront = (sonars[6] < 2000);
+		obstacleFrontLeft = (sonars[2] < 2000);
+		obstacleFrontRight = (sonars[5] < 2000);
+		//covering sonar's blind spots
+		sick.lockDevice();
+		sickReadings = sick.getRawReadingsAsVector();
+		if (sickReadings->size() > 0) {
+			if (sickReadings->at(85).getRange() < 2000
+			|| sickReadings->at(90).getRange() < 2000
+			|| sickReadings->at(95).getRange() < 2000) {
+				obstacleFront = true;
+			}
+		}
+		sick.unlockDevice();
 
+		if (!obstacleFront && !obstacleFrontLeft && !obstacleFrontRight) {
+			robot.setVel2(200, 200);
+		} else if (!obstacleFront && obstacleFrontLeft && !obstacleFrontRight) {
+			robot.setVel2(25, 0);
+		} else if (!obstacleFront && !obstacleFrontLeft && obstacleFrontRight) {
+			robot.setVel2(0, 25);
+		} else if (obstacleFront && !obstacleFrontLeft && !obstacleLeftFront) {
+			robot.setVel2(0, 25);
+		} else if (obstacleFront && !obstacleFrontRight && !obstacleRightFront) {
+			robot.setVel2(25, 0);
+		} else if (obstacleFront && !obstacleFrontLeft && !obstacleFrontRight && !obstacleFrontLeft && !obstacleFrontRight) {
+			robot.setVel2(0, 10);
+		} else if (obstacleFront && obstacleFrontLeft && obstacleFrontRight && !obstacleLeft) {
+			robot.setVel2(0, 50);
+		} else if (obstacleFront && obstacleFrontLeft && obstacleFrontRight && !obstacleRight) {
+			robot.setVel2(50, 0);
+		}
 
 		robot.unlock();
 		ArUtil::sleep(100);
