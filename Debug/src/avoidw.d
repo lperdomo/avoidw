@@ -1,4 +1,4 @@
-src/basepioneer.o: ../src/basepioneer.cpp /usr/local/Aria/include/Aria.h \
+src/avoidw.o: ../src/avoidw.cpp /usr/local/Aria/include/Aria.h \
  /usr/local/Aria/include/ariaOSDef.h \
  /usr/local/Aria/include/ariaTypedefs.h \
  /usr/local/Aria/include/ArSerialConnection.h \

@@ -4,13 +4,13 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../src/basepioneer.cpp 
+../src/avoidw.cpp 
 
 OBJS += \
-./src/basepioneer.o 
+./src/avoidw.o 
 
 CPP_DEPS += \
-./src/basepioneer.d 
+./src/avoidw.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
